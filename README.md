@@ -77,6 +77,12 @@ Hardware logos are stored in `static/logos/` and mapped via `static/logos/logos_
 
 When hardware data is loaded, the frontend tokenizes the detected CPU or GPU name and selects the entry with the highest keyword match score.
 
+## Screenshots
+
+| CPU | Graphics | Bench |
+| :---: | :---: | :---: |
+| ![CPU](screenshots/lhwdi-cpu-ryzen-20261123-220304.png) | ![Graphics](screenshots/lhwdi-graphics-ryzen-20261123-220315.png) | ![Bench](screenshots/lhwdi-bench-ryzen-20261123-220323.png) |
+
 ## License
 
 This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.

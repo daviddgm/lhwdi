@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LHWDI - Linux Hardware Detection &amp; Information</title>
+    <style>
+        :root {
+            --bg-body: #1e1e24;
+            --bg-window: #f2f2f4;
+            --bg-panel: #ffffff;
+            --bg-fieldset: #f9f9fb;
+            --border-color: #b8b8c0;
+            --accent: #5b2c86;
+            --accent-grad: linear-gradient(90deg, #3b1c57, #6d389e);
+            --text-main: #1f1f23;
+            --text-muted: #5a5a66;
+            --clock-color: #0055aa;
+        }
+
+        body.dark {
+            --bg-window: #25252b;
+            --bg-panel: #1b1b20;
+            --bg-fieldset: #2c2c34;
+            --border-color: #40404a;
+            --accent: #9d65d1;
+            --text-main: #e6e6ec;
+            --text-muted: #9e9eab;
+            --clock-color: #4da3ff;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 12px; }
+        body {
+            background-color: var(--bg-body);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .main-window {
+            width: 520px;
+            background: var(--bg-window);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.45);
+            border-radius: 5px;
+            overflow: hidden;
+            color: var(--text-main);
+        }
+
+        .title-bar {
+            background: var(--accent-grad);
+            color: white;
+            padding: 8px 12px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            cursor: default;
+        }
+
+        .title-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .theme-btn {
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            border-radius: 3px;
+            padding: 2px 8px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .theme-btn:hover {
+            background: rgba(255,255,255,0.28);
+        }
+
+        .tabs-wrapper {
+            display: flex;
+            align-items: stretch;
+            background: var(--tab-bg);
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+        .tabs-scroll-btn {
+            background: var(--tab-bg);
+            color: var(--text-main);
+            border: none;
+            border-right: 1px solid var(--border-color);
+            padding: 0 7px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: background 0.15s;
+        }
+        .tabs-scroll-btn:last-child {
+            border-right: none;
+            border-left: 1px solid var(--border-color);
+        }
+        .tabs-scroll-btn:hover:not(:disabled) {
+            background: var(--accent);
+            color: #fff;
+        }
+        .tabs-scroll-btn:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+        .tabs {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            scrollbar-width: none;
+            flex: 1;
+            border-bottom: none;
+        }
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            padding: 6px 11px;
+            white-space: nowrap;
+            flex-shrink: 0;
+            border: 1px solid transparent;
+            border-bottom: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            background: var(--bg-window);
+            border-color: var(--border-color);
+            font-weight: bold;
+            margin-bottom: -1px;
+            border-bottom: 1px solid var(--bg-window);
+            color: var(--accent);
+        }
+
+        .tab-content { display: none; padding: 10px 12px; min-height: 475px; }
+        .tab-content.active { display: block; }
+
+        fieldset {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            padding: 7px 10px;
+            background: var(--bg-fieldset);
+            min-width: 0;
+        }
+
+        legend { font-weight: bold; color: var(--accent); padding: 0 5px; }
+
+        /* Side-by-side layout for hardware details + vendor badge */
+        .hw-header-flex {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        .hw-header-fields {
+            flex: 1;
+            min-width: 0;
+        }
+        .hw-header-fields .field-label,
+        #tab-gpu fieldset:first-child .field-label {
+            width: 82px;
+        }
+        .hw-logo-box {
+            flex-shrink: 0;
+            width: 74px;
+            height: 74px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px;
+        }
+        .hw-logo-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: none;
+        }
+        .hw-logo-box img.loaded {
+            display: block;
+        }
+
+        .grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+        .field-row { display: flex; align-items: center; margin-bottom: 4px; min-width: 0; }
+        .field-label { width: 96px; color: var(--text-muted); flex-shrink: 0; }
+        .field-value {
+            flex-grow: 1;
+            min-width: 0;
+            width: 100%;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            padding: 2px 6px;
+            border-radius: 2px;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .flags-box {
+            height: 38px;
+            overflow-y: auto;
+            white-space: normal;
+            font-family: monospace;
+            font-size: 11px;
+        }
+
+        .core-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 4px;
+            max-height: 88px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .core-item {
+            display: flex;
+            justify-content: space-between;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            padding: 2px 7px;
+            border-radius: 2px;
+            font-family: monospace;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 14px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            transition: width 0.4s ease;
+        }
+
+        .btn-action {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .footer {
+            background: rgba(0,0,0,0.06);
+            border-top: 1px solid var(--border-color);
+            padding: 6px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 42px;
+            left: 50%;
+            transform: translateX(-50%) translateY(15px);
+            background: #23272e;
+            color: #ffffff;
+            border-left: 4px solid #2e8b57;
+            padding: 8px 14px;
+            border-radius: 4px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+            font-size: 11px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            z-index: 999;
+            max-width: 480px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.error {
+            border-left-color: #d9534f;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-window" id="capture-window">
+    <div class="title-bar" ondblclick="captureTabScreenshot()" title="Double-click or press F2 to take a screenshot of the active tab">
+        <span>LHWDI - Linux Hardware Detection &amp; Information</span>
+        <div class="title-actions">
+            <button type="button" class="theme-btn" onclick="captureTabScreenshot()" title="Capture Active Tab Screenshot (F2 or Double-Click Title Bar)">&#128247; F2</button>
+            <button type="button" id="theme-toggle-btn" class="theme-btn" onclick="toggleTheme()" title="Toggle Light / Dark Theme">Light Mode</button>
+        </div>
+    </div>
+
+    <div class="tabs-wrapper">
+        <button type="button" class="tabs-scroll-btn" id="tabs-prev" onclick="scrollTabs(-140)" title="Previous tabs">&#9664;</button>
+        <div class="tabs" id="tabs-bar">
+            <button class="tab-btn active" onclick="openTab(event, 'tab-cpu')">CPU</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-caches')">Caches</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-board')">Mainboard</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-mem')">Memory</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-spd')">SPD</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-gpu')">Graphics</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-drives')">Drives</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-sensors')">Sensors</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-bench')">Bench</button>
+            <button class="tab-btn" onclick="openTab(event, 'tab-about')">About</button>
+        </div>
+        <button type="button" class="tabs-scroll-btn" id="tabs-next" onclick="scrollTabs(140)" title="Next tabs">&#9654;</button>
+    </div>
+
+    <!-- CPU TAB -->
+    <div id="tab-cpu" class="tab-content active">
+        <fieldset>
+            <legend>Processor</legend>
+            <div class="hw-header-flex">
+                <div class="hw-header-fields">
+                    <div class="field-row">
+                        <span class="field-label">Name</span>
+                        <div class="field-value" id="cpu-name">Loading...</div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="field-row">
+                            <span class="field-label">Code Name</span>
+                            <div class="field-value" id="cpu-codename">-</div>
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">Technology</span>
+                            <div class="field-value" id="cpu-litho" style="font-weight:bold; color:var(--clock-color);">-</div>
+                        </div>
+                    </div>
+                    <div class="field-row" style="margin-bottom:0;">
+                        <span class="field-label">Package</span>
+                        <div class="field-value" id="cpu-package">-</div>
+                    </div>
+                </div>
+                <div class="hw-logo-box" id="cpu-logo-box" style="display:none;">
+                    <img id="cpu-logo-img" src="" alt="CPU Logo" onload="this.classList.add('loaded'); this.parentElement.style.display='flex';" onerror="this.parentElement.style.display='none';">
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="field-row">
+                    <span class="field-label">Vendor</span>
+                    <div class="field-value" id="cpu-vendor">-</div>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Architecture</span>
+                    <div class="field-value" id="cpu-arch">-</div>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="field-row">
+                    <span class="field-label">Family / Model</span>
+                    <div class="field-value" id="cpu-fam-mod">-</div>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Stepping</span>
+                    <div class="field-value" id="cpu-step">-</div>
+                </div>
+            </div>
+            <div class="field-row" style="margin-bottom:0;">
+                <span class="field-label">Instructions</span>
+                <div class="field-value flags-box" id="cpu-flags">-</div>
+            </div>
+        </fieldset>
+
+        <div class="grid-2">
+            <fieldset>
+                <legend>Clocks</legend>
+                <div class="field-row">
+                    <span class="field-label">Multiplier</span>
+                    <div class="field-value" id="cpu-mult" style="font-weight:bold; color:var(--clock-color);">-</div>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Bus Speed</span>
+                    <div class="field-value" id="cpu-bus">-</div>
+                </div>
+                <div class="field-row" style="margin-bottom:0;">
+                    <span class="field-label">Min / Max</span>
+                    <div class="field-value" id="cpu-minmax">-</div>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Topology</legend>
+                <div class="field-row">
+                    <span class="field-label">Cores</span>
+                    <div class="field-value" id="cpu-cores">-</div>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">Threads</span>
+                    <div class="field-value" id="cpu-threads">-</div>
+                </div>
+                <div class="field-row" style="margin-bottom:0;">
+                    <span class="field-label">BogoMIPS</span>
+                    <div class="field-value" id="cpu-bogo">-</div>
+                </div>
+            </fieldset>
+        </div>
+
+        <fieldset style="margin-bottom:0;">
+            <legend>Real-Time Core Clocks</legend>
+            <div class="core-grid" id="core-clocks">Loading cores...</div>
+        </fieldset>
+    </div>
+
+    <!-- CACHES TAB -->
+    <div id="tab-caches" class="tab-content">
+        <fieldset>
+            <legend>Cache Hierarchy</legend>
+            <div id="cache-list">Loading...</div>
+        </fieldset>
+    </div>
+
+    <!-- MAINBOARD TAB -->
+    <div id="tab-board" class="tab-content">
+        <fieldset>
+            <legend>Motherboard</legend>
+            <div class="field-row"><span class="field-label">Manufacturer</span><div class="field-value" id="mb-man">-</div></div>
+            <div class="field-row"><span class="field-label">Model</span><div class="field-value" id="mb-mod">-</div></div>
+            <div class="field-row"><span class="field-label">Version</span><div class="field-value" id="mb-ver">-</div></div>
+        </fieldset>
+        <fieldset>
+            <legend>BIOS / UEFI</legend>
+            <div class="field-row"><span class="field-label">Brand</span><div class="field-value" id="bios-ven">-</div></div>
+            <div class="field-row"><span class="field-label">Version</span><div class="field-value" id="bios-ver">-</div></div>
+            <div class="field-row"><span class="field-label">Date</span><div class="field-value" id="bios-date">-</div></div>
+        </fieldset>
+    </div>
+
+    <!-- MEMORY TAB -->
+    <div id="tab-mem" class="tab-content">
+        <fieldset>
+            <legend>System RAM Usage</legend>
+            <div class="field-row"><span class="field-label">Total RAM</span><div class="field-value" id="mem-total">-</div></div>
+            <div class="field-row"><span class="field-label">Used RAM</span><div class="field-value" id="mem-used">-</div></div>
+            <div class="field-row"><span class="field-label">Available RAM</span><div class="field-value" id="mem-avail">-</div></div>
+            <div class="field-row"><span class="field-label">Swap Total</span><div class="field-value" id="mem-swap">-</div></div>
+            <div class="progress-bar"><div class="progress-fill" id="mem-bar" style="width: 0%;"></div></div>
+        </fieldset>
+    </div>
+
+    <!-- SPD TAB -->
+    <div id="tab-spd" class="tab-content">
+        <fieldset>
+            <legend>Memory Slot Selection</legend>
+            <div id="spd-locked" style="text-align:center; padding: 15px;">
+                <p style="margin-bottom: 10px; color: var(--text-muted);">
+                    Reading via <code>dmidecode</code> is not authorized.
+                </p>
+                <button class="btn-action" onclick="unlockSPD()">Read SPD Modules</button>
+            </div>
+            <div id="spd-content" style="display:none;">
+                <div class="field-row">
+                    <span class="field-label">Slot</span>
+                    <select id="spd-select" class="field-value" onchange="renderSelectedSlot()"></select>
+                </div>
+                <div class="grid-2">
+                    <div class="field-row"><span class="field-label">Module Size</span><div class="field-value" id="spd-size">-</div></div>
+                    <div class="field-row"><span class="field-label">Max Bandwidth</span><div class="field-value" id="spd-speed">-</div></div>
+                </div>
+                <div class="grid-2">
+                    <div class="field-row"><span class="field-label">Ranks</span><div class="field-value" id="spd-rank">-</div></div>
+                    <div class="field-row"><span class="field-label">Active Clock</span><div class="field-value" id="spd-cfg-speed">-</div></div>
+                </div>
+                <div class="grid-2">
+                    <div class="field-row"><span class="field-label">Voltage</span><div class="field-value" id="spd-volt">-</div></div>
+                    <div class="field-row"><span class="field-label">Data Width</span><div class="field-value" id="spd-width">-</div></div>
+                </div>
+                <div class="field-row"><span class="field-label">Manufacturer</span><div class="field-value" id="spd-man">-</div></div>
+                <div class="field-row"><span class="field-label">Part Number</span><div class="field-value" id="spd-part">-</div></div>
+
+                <fieldset style="margin-top: 8px; margin-bottom: 0;">
+                    <legend>Timings Table (JEDEC / XMP)</legend>
+                    <div id="spd-timings" style="max-height: 110px; overflow-y: auto; font-family: monospace; font-size: 11px;">
+                        -
+                    </div>
+                </fieldset>
+            </div>
+        </fieldset>
+    </div>
+
+    <!-- GRAPHICS TAB -->
+    <div id="tab-gpu" class="tab-content">
+        <fieldset>
+            <legend>Display Device Selection</legend>
+            <div class="field-row">
+                <span class="field-label">Adapter</span>
+                <select id="gpu-select" class="field-value" onchange="renderGPU()"></select>
+            </div>
+            <div class="hw-header-flex">
+                <div class="hw-header-fields">
+                    <div class="field-row">
+                        <span class="field-label">GPU Name</span>
+                        <div class="field-value" id="gpu-name">-</div>
+                    </div>
+                    <div class="field-row">
+                        <span class="field-label">Board Partner</span>
+                        <div class="field-value" id="gpu-sub">-</div>
+                    </div>
+                    <div class="field-row" style="margin-bottom: 0;">
+                        <span class="field-label">Device ID</span>
+                        <div class="field-value" id="gpu-id">-</div>
+                    </div>
+                </div>
+                <div class="hw-logo-box" id="gpu-logo-box" style="display:none;">
+                    <img id="gpu-logo-img" src="" alt="GPU Logo" onload="this.classList.add('loaded'); this.parentElement.style.display='flex';" onerror="this.parentElement.style.display='none';">
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="field-row"><span class="field-label">GPU Chip</span><div class="field-value" id="gpu-chip">-</div></div>
+                <div class="field-row"><span class="field-label">Technology</span><div class="field-value" id="gpu-litho" style="font-weight:bold; color:var(--clock-color);">-</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="field-row"><span class="field-label">Kernel Driver</span><div class="field-value" id="gpu-drv">-</div></div>
+                <div class="field-row"><span class="field-label">Bus Interface</span><div class="field-value" id="gpu-pcie">-</div></div>
+            </div>
+        </fieldset>
+
+        <div class="grid-2">
+            <fieldset>
+                <legend>Clocks (Real-Time)</legend>
+                <div class="field-row"><span class="field-label">GPU Core</span><div class="field-value" id="gpu-sclk" style="font-weight:bold; color:var(--clock-color);">-</div></div>
+                <div class="field-row"><span class="field-label">Memory</span><div class="field-value" id="gpu-mclk">-</div></div>
+            </fieldset>
+
+            <fieldset>
+                <legend>Sensors &amp; Load</legend>
+                <div class="field-row"><span class="field-label">GPU Load</span><div class="field-value" id="gpu-busy">-</div></div>
+                <div class="field-row"><span class="field-label">Temp / Power</span><div class="field-value" id="gpu-tp">-</div></div>
+            </fieldset>
+        </div>
+
+        <fieldset>
+            <legend>Memory (VRAM)</legend>
+            <div class="grid-2">
+                <div class="field-row"><span class="field-label">Size</span><div class="field-value" id="gpu-vram-tot">-</div></div>
+                <div class="field-row"><span class="field-label">Type / Vendor</span><div class="field-value" id="gpu-vram-type">-</div></div>
+            </div>
+            <div class="field-row">
+                <span class="field-label">Used VRAM</span>
+                <div class="field-value" id="gpu-vram-used">-</div>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="gpu-vram-bar" style="width: 0%;"></div></div>
+        </fieldset>
+    </div>
+
+    <!-- DRIVES / STORAGE TAB -->
+    <div id="tab-drives" class="tab-content">
+        <fieldset>
+            <legend>Storage Device Selection</legend>
+            <div class="field-row">
+                <span class="field-label">Drive</span>
+                <select id="drive-select" class="field-value" onchange="renderDrive()"></select>
+            </div>
+            <div class="field-row">
+                <span class="field-label">Model</span>
+                <div class="field-value" id="drv-model" style="font-weight: bold;">-</div>
+            </div>
+            <div class="grid-2">
+                <div class="field-row"><span class="field-label">Type</span><div class="field-value" id="drv-type">-</div></div>
+                <div class="field-row"><span class="field-label">Capacity</span><div class="field-value" id="drv-size">-</div></div>
+            </div>
+            <div class="field-row">
+                <span class="field-label">Interface</span>
+                <div class="field-value" id="drv-iface">-</div>
+            </div>
+            <div class="grid-2">
+                <div class="field-row"><span class="field-label">Firmware</span><div class="field-value" id="drv-fw">-</div></div>
+                <div class="field-row"><span class="field-label">Temperature</span><div class="field-value" id="drv-temp" style="font-weight: bold; color: var(--clock-color);">-</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="field-row"><span class="field-label">Serial Number</span><div class="field-value" id="drv-serial">-</div></div>
+                <div class="field-row"><span class="field-label">Device Node</span><div class="field-value" id="drv-node">-</div></div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Partitions &amp; Mount Points</legend>
+            <div id="drv-partitions" style="max-height: 145px; overflow-y: auto; font-size: 11px;">
+                -
+            </div>
+        </fieldset>
+    </div>
+
+    <!-- SENSORS TAB -->
+    <div id="tab-sensors" class="tab-content">
+        <fieldset>
+            <legend>Power Consumption (RAPL / HWMON)</legend>
+            <div class="grid-2">
+                <div class="field-row">
+                    <span class="field-label">CPU Package</span>
+                    <div class="field-value" id="sensor-cpu-power" style="font-weight: bold; color: var(--clock-color);">-</div>
+                </div>
+                <div class="field-row">
+                    <span class="field-label">GPU Board</span>
+                    <div class="field-value" id="sensor-gpu-power">-</div>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Hardware Temperatures (HWMON)</legend>
+            <div id="sensors-list" style="max-height: 230px; overflow-y: auto; padding-right: 4px;">
+                Loading sensors...
+            </div>
+        </fieldset>
+    </div>
+
+    <!-- BENCH TAB -->
+    <div id="tab-bench" class="tab-content">
+        <fieldset>
+            <legend>CPU Benchmark (Native C Multi-Thread Engine)</legend>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <button id="btn-run-bench" class="btn-action" onclick="runBenchmark()">Bench CPU</button>
+                <span id="bench-status" style="color: var(--text-muted); font-size: 11px;">Ready to start (~5s)</span>
+            </div>
+
+            <div class="grid-2">
+                <div class="field-row">
+                    <span class="field-label" style="width: 115px;">CPU Single Thread</span>
+                    <div class="field-value" id="bench-st" style="font-weight: bold; color: var(--clock-color); text-align: right;">-</div>
+                </div>
+                <div class="field-row">
+                    <span class="field-label" style="width: 115px;">CPU Multi Thread</span>
+                    <div class="field-value" id="bench-mt" style="font-weight: bold; color: var(--accent); text-align: right;">-</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="field-row">
+                    <span class="field-label" style="width: 115px;">Multi Thread Ratio</span>
+                    <div class="field-value" id="bench-ratio" style="text-align: right;">-</div>
+                </div>
+                <div class="field-row">
+                    <span class="field-label" style="width: 115px;">Threads Tested</span>
+                    <div class="field-value" id="bench-threads" style="text-align: right;">-</div>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Reference Comparison</legend>
+            <div class="field-row">
+                <span class="field-label">Reference CPU</span>
+                <select id="bench-ref-select" class="field-value" onchange="updateBenchBars()">
+                    <option value="650,14750">AMD Ryzen 9 5900XT (16C/32T)</option>
+                    <option value="655,14900">AMD Ryzen 9 5950X (16C/32T)</option>
+                    <option value="648,11850">AMD Ryzen 9 5900X (12C/24T)</option>
+                    <option value="565,5850">AMD Ryzen 5 5600X (6C/12T)</option>
+                    <option value="495,4050">AMD Ryzen 5 3600 (6C/12T)</option>
+                    <option value="765,12600">AMD Ryzen 7 7700X (8C/16T)</option>
+                    <option value="820,17100">Intel Core i7-13700K (16C/24T)</option>
+                </select>
+            </div>
+
+            <div style="margin-top: 10px; font-size: 11px;">
+                <div style="display:flex; justify-content:space-between;">
+                    <span>Your CPU (Single)</span>
+                    <strong id="bar-st-label">-</strong>
+                </div>
+                <div class="progress-bar" style="height: 11px; margin-top: 2px; margin-bottom: 6px;">
+                    <div class="progress-fill" id="bar-st-you" style="width: 0%; background: var(--clock-color);"></div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; color: var(--text-muted);">
+                    <span>Reference (Single)</span>
+                    <span id="bar-ref-st-label">648</span>
+                </div>
+                <div class="progress-bar" style="height: 11px; margin-top: 2px; margin-bottom: 12px;">
+                    <div class="progress-fill" id="bar-st-ref" style="width: 80%; background: #888;"></div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between;">
+                    <span>Your CPU (Multi)</span>
+                    <strong id="bar-mt-label">-</strong>
+                </div>
+                <div class="progress-bar" style="height: 11px; margin-top: 2px; margin-bottom: 6px;">
+                    <div class="progress-fill" id="bar-mt-you" style="width: 0%; background: var(--accent);"></div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; color: var(--text-muted);">
+                    <span>Reference (Multi)</span>
+                    <span id="bar-ref-mt-label">11850</span>
+                </div>
+                <div class="progress-bar" style="height: 11px; margin-top: 2px;">
+                    <div class="progress-fill" id="bar-mt-ref" style="width: 80%; background: #888;"></div>
+                </div>
+            </div>
+        </fieldset>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <div class="footer">
+        <span id="os-info" style="max-width: 270px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Linux</span>
+        <div style="display: flex; gap: 6px; align-items: center;">
+            <button type="button" onclick="saveReport('txt', this)" class="theme-btn" style="background: var(--accent); font-weight: bold;">Save TXT</button>
+            <button type="button" onclick="saveReport('html', this)" class="theme-btn" style="background: #2e8b57; font-weight: bold;">Save HTML</button>
+        </div>
+    </div>
+
+    <!-- ABOUT TAB -->
+    <div id="tab-about" class="tab-content">
+        <fieldset>
+            <legend>LHWDI — Linux Hardware Detection &amp; Information</legend>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+                <div style="width: 44px; height: 44px; border-radius: 6px; background: linear-gradient(135deg, #3b1c57, #7b42b8); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: bold; font-size: 11px; flex-shrink: 0; border: 1px solid var(--border-color);">
+                    <span>LHWDI</span>
+                    <span style="font-size: 8px; opacity: 0.85;">LINUX</span>
+                </div>
+                <div style="font-size: 11px; line-height: 1.45;">
+                    <div style="font-weight: bold; font-size: 12px; color: var(--text-main);">LHWDI - Linux Hardware Detection &amp; Information v1.0</div>
+                    <div style="color: var(--text-muted);">Lightweight telemetry, SPD/EEPROM, storage, and native CPU benchmark utility.</div>
+                </div>
+            </div>
+
+            <div style="background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 4px; padding: 8px 10px; font-size: 11px; line-height: 1.55;">
+                <div><strong>Author &amp; Engineering:</strong> David Martinz (<code>gandhimartinz.eng.br</code>)</div>
+                <div><strong>Co-Development &amp; Architecture:</strong> Google Gemini AI</div>
+                <div><strong>Tech Stack:</strong> Python / Flask • C11 Native Engine (<code>gcc -O3</code>) • HTML5 / CSS3 / Vanilla JS</div>
+                <div><strong>Shortcuts:</strong> Press <code>F2</code> or double-click the title bar to save a PNG screenshot</div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Operating System &amp; Runtime Environment</legend>
+            <div class="field-row">
+                <span class="field-label">Distribution</span>
+                <div class="field-value" id="about-os">-</div>
+            </div>
+            <div class="grid-2">
+                <div class="field-row"><span class="field-label">Kernel</span><div class="field-value" id="about-kernel">-</div></div>
+                <div class="field-row"><span class="field-label">Uptime</span><div class="field-value" id="about-uptime">-</div></div>
+            </div>
+            <div class="grid-2">
+                <div class="field-row"><span class="field-label">Host / Desktop</span><div class="field-value" id="about-desktop">-</div></div>
+                <div class="field-row"><span class="field-label">Python Runtime</span><div class="field-value" id="about-python">-</div></div>
+            </div>
+            <div class="field-row">
+                <span class="field-label">Native Compiler</span>
+                <div class="field-value" id="about-gcc">-</div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Tools &amp; Validation</legend>
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 11px;">
+                <span style="color: var(--text-muted);">Export full hardware report to <code>~/Downloads</code>:</span>
+                <div style="display: flex; gap: 6px;">
+                    <button type="button" class="btn-action" onclick="saveReport('txt', this)">Save Report (.TXT)</button>
+                    <button type="button" class="btn-action" onclick="saveReport('html', this)">Validation (.HTML)</button>
+                </div>
+            </div>
+        </fieldset>
+    </div>
+
+</div>
+
+<script>
+    const tabsBar = document.getElementById('tabs-bar');
+    let _logosCache = null;
+
+    async function updateHardwareLogo(hardwareName, imgId, type = 'cpu') {
+        if (!hardwareName || hardwareName === '-' || hardwareName === 'Loading...') return;
+        const imgEl = document.getElementById(imgId);
+        if (!imgEl) return;
+
+        try {
+            if (!_logosCache) {
+                const res = await fetch('/static/logos/logos_index.json');
+                if (!res.ok) return;
+                _logosCache = await res.json();
+            }
+
+            const norm = hardwareName.toLowerCase().replace(/[^a-z0-9+\-\s]/g, ' ');
+            const tokens = new Set(norm.split(/\s+/));
+
+            let bestFile = null;
+            let bestScore = 0;
+
+            const searchList = (_logosCache[type] && _logosCache[type].length > 0)
+                ? _logosCache[type]
+                : [...(_logosCache.gpu || []), ...(_logosCache.cpu || [])];
+
+            for (const item of searchList) {
+                const kws = item.keywords;
+                const allMatched = kws.every(kw => kw.length <= 2 ? tokens.has(kw) : norm.includes(kw));
+
+                if (allMatched && kws.length > bestScore) {
+                    bestScore = kws.length;
+                    bestFile = item.file;
+                }
+            }
+
+            // Fallback by vendor if no specific badge matched
+            if (!bestFile) {
+                const allLogos = [...(_logosCache.gpu || []), ...(_logosCache.cpu || [])];
+                const brand = norm.includes('radeon') || norm.includes('amd') || norm.includes('ati') ? 'amd'
+                            : norm.includes('nvidia') || norm.includes('geforce') || norm.includes('rtx') || norm.includes('gtx') ? 'nvidia'
+                            : norm.includes('intel') || norm.includes('arc') ? 'intel' : null;
+                if (brand) {
+                    const fallback = allLogos.find(it => it.file.toLowerCase().includes(brand));
+                    if (fallback) bestFile = fallback.file;
+                }
+            }
+
+            if (bestFile) {
+                const targetUrl = `/static/logos/${bestFile}`;
+                if (!imgEl.src.endsWith(targetUrl)) {
+                    imgEl.src = targetUrl;
+                }
+            }
+        } catch (err) {
+            // Silently ignore if /static/logos directory is not present
+        }
+    }
+
+    function updateTabNavButtons() {
+        const prevBtn = document.getElementById('tabs-prev');
+        const nextBtn = document.getElementById('tabs-next');
+        if (!tabsBar || !prevBtn || !nextBtn) return;
+
+        prevBtn.disabled = tabsBar.scrollLeft <= 2;
+        nextBtn.disabled = tabsBar.scrollLeft + tabsBar.clientWidth >= tabsBar.scrollWidth - 2;
+    }
+
+    function scrollTabs(offset) {
+        tabsBar.scrollBy({ left: offset, behavior: 'smooth' });
+        setTimeout(updateTabNavButtons, 260);
+    }
+
+    tabsBar.addEventListener('wheel', (e) => {
+        if (e.deltaY !== 0) {
+            e.preventDefault();
+            tabsBar.scrollLeft += e.deltaY;
+            updateTabNavButtons();
+        }
+    }, { passive: false });
+
+    tabsBar.addEventListener('scroll', updateTabNavButtons);
+    window.addEventListener('resize', updateTabNavButtons);
+
+    let spdSlots = [];
+    let gpuList = [];
+    let driveList = [];
+
+    function renderDrive() {
+        const idx = document.getElementById('drive-select').value || 0;
+        const d = driveList[idx];
+        if (!d) return;
+
+        document.getElementById('drv-model').textContent = d.model;
+        document.getElementById('drv-type').textContent = d.type;
+        document.getElementById('drv-size').textContent = d.size;
+        document.getElementById('drv-iface').textContent = d.interface;
+        document.getElementById('drv-fw').textContent = d.firmware;
+        document.getElementById('drv-temp').textContent = d.temp;
+        document.getElementById('drv-serial').textContent = d.serial;
+        document.getElementById('drv-node').textContent = `${d.device} (${d.state})`;
+
+        const pBox = document.getElementById('drv-partitions');
+        if (!d.partitions || d.partitions.length === 0) {
+            pBox.innerHTML = '<span style="color:var(--text-muted)">No partitions detected on this drive.</span>';
+            return;
+        }
+
+        pBox.innerHTML = d.partitions.map(p => `
+            <div style="border-bottom: 1px solid var(--border-color); padding: 5px 0;">
+                <div style="display:flex; justify-content:space-between;">
+                    <strong>/dev/${p.name} <span style="color:var(--accent);">[${p.fstype}]</span></strong>
+                    <span>${p.size} — <code>${p.mountpoint}</code></span>
+                </div>
+                ${p.used_str ? `
+                    <div style="display:flex; justify-content:space-between; color:var(--text-muted); font-size:10px; margin-top:2px;">
+                        <span>Used Space</span>
+                        <span>${p.used_str}</span>
+                    </div>
+                    <div class="progress-bar" style="height: 8px; margin-top: 2px;">
+                        <div class="progress-fill" style="width: ${p.used_pct}%;"></div>
+                    </div>
+                ` : ''}
+            </div>
+        `).join('');
+    }
+
+    function renderGPU() {
+        const idx = document.getElementById('gpu-select').value || 0;
+        const g = gpuList[idx];
+        if (!g) return;
+
+        document.getElementById('gpu-name').textContent = g.name;
+        document.getElementById('gpu-name').title = g.name;
+        updateHardwareLogo(`${g.name} ${g.subvendor} ${g.driver}`, 'gpu-logo-img', 'gpu');
+
+        document.getElementById('gpu-sub').textContent = g.subvendor;
+        document.getElementById('gpu-id').textContent = g.pci_id;
+        document.getElementById('gpu-chip').textContent = g.codename || '-';
+        document.getElementById('gpu-litho').textContent = g.lithography || '-';
+        document.getElementById('gpu-drv').textContent = g.driver;
+        document.getElementById('gpu-pcie').textContent = g.pcie;
+
+        document.getElementById('gpu-sclk').textContent = g.sclk;
+        document.getElementById('gpu-mclk').textContent = g.mclk;
+        document.getElementById('gpu-busy').textContent = g.busy;
+        document.getElementById('gpu-tp').textContent = `${g.temp} • ${g.power}`;
+
+        document.getElementById('gpu-vram-tot').textContent = g.vram_total;
+        document.getElementById('gpu-vram-type').textContent = g.vram_vendor;
+        document.getElementById('gpu-vram-used').textContent = `${g.vram_used} (${g.vram_pct}%)`;
+        document.getElementById('gpu-vram-bar').style.width = `${g.vram_pct}%`;
+    }
+
+    function openTab(evt, tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        evt.currentTarget.classList.add('active');
+        evt.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        setTimeout(updateTabNavButtons, 260);
+    }
+
+    async function loadStaticData() {
+        const res = await fetch('/api/static');
+        const data = await res.json();
+
+        document.getElementById('cpu-name').textContent = data.cpu.name;
+        updateHardwareLogo(data.cpu.name, 'cpu-logo-img', 'cpu');
+
+        document.getElementById('cpu-codename').textContent = data.cpu.codename || '-';
+        document.getElementById('cpu-litho').textContent = data.cpu.lithography || '-';
+        document.getElementById('cpu-package').textContent = data.cpu.package || '-';
+        document.getElementById('cpu-vendor').textContent = data.cpu.vendor;
+        document.getElementById('cpu-arch').textContent = data.cpu.architecture;
+        document.getElementById('cpu-fam-mod').textContent = `${data.cpu.family} / ${data.cpu.model}`;
+        document.getElementById('cpu-step').textContent = data.cpu.stepping;
+        document.getElementById('cpu-flags').textContent = data.cpu.flags;
+
+        document.getElementById('cpu-bus').textContent = `${data.cpu.bus_speed_mhz.toFixed(1)} MHz`;
+        document.getElementById('cpu-minmax').textContent = `${parseFloat(data.cpu.min_mhz).toFixed(0)} - ${parseFloat(data.cpu.max_mhz).toFixed(0)} MHz`;
+        document.getElementById('cpu-cores').textContent = data.cpu.cores;
+        document.getElementById('cpu-threads').textContent = data.cpu.threads;
+        document.getElementById('cpu-bogo').textContent = data.cpu.bogomips;
+
+        document.getElementById('cache-list').innerHTML = data.caches.map(c => `
+            <div class="field-row">
+                <span class="field-label">${c.level}</span>
+                <div class="field-value">${c.size} (${c.ways})</div>
+            </div>
+        `).join('');
+
+        document.getElementById('mb-man').textContent = data.mainboard.manufacturer;
+        document.getElementById('mb-mod').textContent = data.mainboard.model;
+        document.getElementById('mb-ver').textContent = data.mainboard.version;
+        document.getElementById('bios-ven').textContent = data.mainboard.bios_vendor;
+        document.getElementById('bios-ver').textContent = data.mainboard.bios_version;
+        document.getElementById('bios-date').textContent = data.mainboard.bios_date;
+
+        document.getElementById('about-os').textContent = data.os || '-';
+        if (data.system) {
+            document.getElementById('about-kernel').textContent = data.system.kernel;
+            document.getElementById('about-uptime').textContent = data.system.uptime;
+            document.getElementById('about-desktop').textContent = `${data.system.hostname} • ${data.system.desktop}`;
+            document.getElementById('about-python').textContent = `Python ${data.system.python_version}`;
+            document.getElementById('about-gcc').textContent = data.system.gcc_version;
+        }
+
+        gpuList = data.graphics;
+        const gpuSel = document.getElementById('gpu-select');
+        gpuSel.innerHTML = gpuList.map((g, i) => `<option value="${i}">${g.card}: ${g.name}</option>`).join('');
+        renderGPU();
+
+        document.getElementById('os-info').textContent = data.os;
+
+        const spdRes = await fetch('/api/spd');
+        const spdData = await spdRes.json();
+        if (spdData.authorized) {
+            setupSPD(spdData.slots);
+        }
+
+        if (data.storage) {
+            driveList = data.storage;
+            const drvSel = document.getElementById('drive-select');
+            drvSel.innerHTML = driveList.map((d, i) => `<option value="${i}">${d.device} — ${d.model}</option>`).join('');
+            renderDrive();
+        }
+    }
+
+    async function updateDynamicData() {
+        try {
+            const res = await fetch('/api/dynamic');
+            const data = await res.json();
+
+            if (data.cpu_clocks_meta) {
+                document.getElementById('cpu-mult').textContent = data.cpu_clocks_meta.multiplier;
+                document.getElementById('cpu-bus').textContent = `${data.cpu_clocks_meta.bus_speed_mhz.toFixed(1)} MHz`;
+            }
+
+            document.getElementById('core-clocks').innerHTML = data.clocks.map(c => `
+                <div class="core-item">
+                    <span>${c.core}</span>
+                    <strong style="color: var(--clock-color);">${c.mhz.toFixed(0)} MHz</strong>
+                </div>
+            `).join('');
+
+            document.getElementById('mem-total').textContent = data.memory.total;
+            document.getElementById('mem-used').textContent = `${data.memory.used} (${data.memory.percent}%)`;
+            document.getElementById('mem-avail').textContent = data.memory.available;
+            document.getElementById('mem-swap').textContent = data.memory.swap;
+            document.getElementById('mem-bar').style.width = `${data.memory.percent}%`;
+
+            const sensorsBox = document.getElementById('sensors-list');
+            if (sensorsBox && data.temps) {
+                if (data.temps.length === 0) {
+                    sensorsBox.innerHTML = '<span style="color:var(--text-muted)">No HWMON sensors found.</span>';
+                } else {
+                    const groups = {};
+                    data.temps.forEach(t => {
+                        const grp = t.chip || 'Hardware';
+                        if (!groups[grp]) groups[grp] = [];
+                        groups[grp].push(t);
+                    });
+
+                    sensorsBox.innerHTML = Object.entries(groups).map(([chip, items]) => `
+                        <div style="margin-bottom: 8px;">
+                            <div style="font-size: 10px; font-weight: bold; color: var(--accent); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; border-bottom: 1px solid var(--border-color); padding-bottom: 2px;">
+                                ${chip}
+                            </div>
+                            ${items.map(item => {
+                                const color = item.temp >= 85 ? '#d9534f' : (item.temp >= 70 ? '#d9822b' : 'var(--clock-color)');
+                                const critTxt = item.crit ? ` <span style="color:var(--text-muted); font-size:10px;">(Max ${item.crit}°C)</span>` : '';
+                                return `
+                                    <div class="field-row" style="margin-bottom: 3px;">
+                                        <span class="field-label" style="width: 140px;">${item.label}</span>
+                                        <div class="field-value" style="display:flex; justify-content:space-between; align-items:center;">
+                                            <strong style="color: ${color};">${item.temp.toFixed(1)} °C</strong>
+                                            ${critTxt}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `).join('');
+                }
+            }
+
+            if (data.graphics && data.graphics.length > 0) {
+                gpuList = data.graphics;
+                renderGPU();
+            }
+            if (data.storage && data.storage.length > 0) {
+                driveList = data.storage;
+                renderDrive();
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function unlockSPD() {
+        const res = await fetch('/api/spd/unlock', { method: 'POST' });
+        const data = await res.json();
+        if (data.authorized) {
+            setupSPD(data.slots);
+        } else {
+            alert(data.error || "Unable to gain access to dmidecode.");
+        }
+    }
+
+    function setupSPD(slots) {
+        spdSlots = slots;
+        document.getElementById('spd-locked').style.display = 'none';
+        document.getElementById('spd-content').style.display = 'block';
+
+        const sel = document.getElementById('spd-select');
+        sel.innerHTML = slots.map((s, idx) =>
+            `<option value="${idx}">${s.locator} ${s.installed ? `(${s.size})` : '(Empty)'}</option>`
+        ).join('');
+        renderSelectedSlot();
+    }
+
+    function renderSelectedSlot() {
+        const idx = document.getElementById('spd-select').value;
+        const slot = spdSlots[idx];
+        const fields = ['spd-size', 'spd-speed', 'spd-rank', 'spd-cfg-speed', 'spd-volt', 'spd-width', 'spd-man', 'spd-part'];
+
+        if (!slot || !slot.installed) {
+            fields.forEach(id => document.getElementById(id).textContent = 'Empty Slot');
+            document.getElementById('spd-timings').innerHTML = '<span style="color:var(--text-muted)">No memory module installed in this slot.</span>';
+            return;
+        }
+
+        document.getElementById('spd-size').textContent = `${slot.size} (${slot.type})`;
+        document.getElementById('spd-speed').textContent = slot.speed;
+        document.getElementById('spd-rank').textContent = slot.rank;
+        document.getElementById('spd-cfg-speed').textContent = slot.configured_speed;
+        document.getElementById('spd-volt').textContent = slot.voltage;
+        document.getElementById('spd-width').textContent = slot.data_width;
+        document.getElementById('spd-man').textContent = slot.manufacturer;
+        document.getElementById('spd-part').textContent = slot.part_number;
+
+        const tBox = document.getElementById('spd-timings');
+        let html = '';
+        if (slot.xmp) {
+            html += `<div style="color: var(--accent); font-weight: bold; margin-bottom: 4px;">${slot.xmp}</div>`;
+        }
+        if (slot.timings && slot.timings.length > 0) {
+            html += slot.timings.map(t => `
+                <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding:2px 0;">
+                    <span>${t.freq}</span>
+                    <strong>${t.timings}</strong>
+                </div>
+            `).join('');
+        } else {
+            html += '<span style="color:var(--text-muted)">Load the ee1004 / i2c-piix4 kernel modules to read the EEPROM table.</span>';
+        }
+        tBox.innerHTML = html;
+    }
+
+    loadStaticData();
+    updateDynamicData();
+    setInterval(updateDynamicData, 1000);
+
+    let lastBench = null;
+
+    function updateBenchBars() {
+        const refVal = document.getElementById('bench-ref-select').value.split(',');
+        const refST = parseFloat(refVal[0]);
+        const refMT = parseFloat(refVal[1]);
+
+        document.getElementById('bar-ref-st-label').textContent = refST.toFixed(1);
+        document.getElementById('bar-ref-mt-label').textContent = refMT.toFixed(1);
+
+        const yourST = lastBench ? lastBench.single_thread : 0;
+        const yourMT = lastBench ? lastBench.multi_thread : 0;
+
+        document.getElementById('bar-st-label').textContent = yourST ? yourST.toFixed(1) : '-';
+        document.getElementById('bar-mt-label').textContent = yourMT ? yourMT.toFixed(1) : '-';
+
+        const maxST = Math.max(yourST, refST, 1);
+        const maxMT = Math.max(yourMT, refMT, 1);
+
+        document.getElementById('bar-st-you').style.width = `${(yourST / maxST) * 100}%`;
+        document.getElementById('bar-st-ref').style.width = `${(refST / maxST) * 100}%`;
+
+        document.getElementById('bar-mt-you').style.width = `${(yourMT / maxMT) * 100}%`;
+        document.getElementById('bar-mt-ref').style.width = `${(refMT / maxMT) * 100}%`;
+    }
+
+    async function runBenchmark() {
+        const btn = document.getElementById('btn-run-bench');
+        const status = document.getElementById('bench-status');
+        btn.disabled = true;
+        btn.textContent = 'Running...';
+        status.textContent = 'Testing Single-Thread and Multi-Thread (please wait ~5s)...';
+
+        try {
+            const res = await fetch('/api/bench', { method: 'POST' });
+            const data = await res.json();
+            if (data.ok) {
+                lastBench = data.result;
+                document.getElementById('bench-st').textContent = lastBench.single_thread.toFixed(1);
+                document.getElementById('bench-mt').textContent = lastBench.multi_thread.toFixed(1);
+                document.getElementById('bench-ratio').textContent = lastBench.ratio;
+                document.getElementById('bench-threads').textContent = `${lastBench.threads_used} Threads`;
+                status.textContent = `Completed in ${lastBench.duration}s`;
+                updateBenchBars();
+                showToast(`Benchmark finished: ST ${lastBench.single_thread} / MT ${lastBench.multi_thread}`);
+            } else {
+                status.textContent = 'Benchmark error.';
+                showToast(data.error, true);
+            }
+        } catch (err) {
+            status.textContent = 'Communication failure.';
+            showToast('Failed to run benchmark.', true);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Bench CPU';
+        }
+    }
+
+    updateBenchBars();
+
+    let toastTimer = null;
+    function showToast(msg, isError = false) {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.textContent = msg;
+        toast.classList.toggle('error', isError);
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 4000);
+    }
+
+    async function saveReport(fmt, btn) {
+        const origText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+        try {
+            const res = await fetch(`api/export/save/${fmt}`, { method: 'POST' });
+            const data = await res.json();
+            if (data.ok) {
+                showToast(`Saved to ~/Downloads/${data.filename}`);
+            } else {
+                showToast(`Save error: ${data.error}`, true);
+            }
+        } catch (err) {
+            showToast('Failed to communicate with backend.', true);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = origText;
+        }
+    }
+
+    async function imageToDataURL(imgEl) {
+        if (!imgEl || !imgEl.src || imgEl.style.display === 'none' || !imgEl.complete || imgEl.naturalWidth === 0) {
+            return null;
+        }
+        try {
+            const c = document.createElement('canvas');
+            c.width = imgEl.naturalWidth;
+            c.height = imgEl.naturalHeight;
+            c.getContext('2d').drawImage(imgEl, 0, 0);
+            return c.toDataURL('image/png');
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function captureTabScreenshot() {
+        const win = document.getElementById('capture-window');
+        const activeTabBtn = document.querySelector('.tab-btn.active');
+        const tabSlug = activeTabBtn
+            ? activeTabBtn.textContent.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')
+            : 'window';
+
+        const rect = win ? win.getBoundingClientRect() : null;
+        const dpr = window.devicePixelRatio || 1;
+        // Offset from window outer frame to viewport content (0 in frameless pywebview)
+        const chromeTop = Math.max(0, (window.outerHeight - window.innerHeight));
+        const chromeLeft = Math.max(0, Math.round((window.outerWidth - window.innerWidth) / 2));
+
+        const crop = rect ? {
+            x: Math.round((rect.left + chromeLeft) * dpr),
+            y: Math.round((rect.top + chromeTop) * dpr),
+            w: Math.round(rect.width * dpr),
+            h: Math.round(rect.height * dpr)
+        } : null;
+
+        try {
+            const res = await fetch('/api/screenshot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tab: tabSlug, crop: crop })
+            });
+            const data = await res.json();
+            if (data.ok) {
+                showToast(`Screenshot saved: ~/Downloads/${data.filename}`);
+            } else {
+                showToast(`Screenshot error: ${data.error}`, true);
+            }
+        } catch (err) {
+            showToast('Failed to communicate with screenshot backend.', true);
+        }
+    }
+
+    // Keyboard shortcut: F2 captures the active tab
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'F2') {
+            e.preventDefault();
+            captureTabScreenshot();
+        }
+    });
+
+    function applyTheme(isDark) {
+        document.body.classList.toggle('dark', isDark);
+        const btn = document.getElementById('theme-toggle-btn');
+        if (btn) {
+            btn.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+        }
+        localStorage.setItem('lhwdi-theme', isDark ? 'dark' : 'light');
+    }
+
+    function toggleTheme() {
+        const isCurrentlyDark = document.body.classList.contains('dark');
+        applyTheme(!isCurrentlyDark);
+    }
+
+    const savedTheme = localStorage.getItem('lhwdi-theme');
+    applyTheme(savedTheme ? savedTheme === 'dark' : true);
+</script>
+
+</body>
+</html>

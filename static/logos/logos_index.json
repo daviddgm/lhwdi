@@ -1,0 +1,912 @@
+{
+  "cpu": [
+    {
+      "id": 423,
+      "file": "cpu_intel_core_9.png",
+      "keywords": [
+        "intel",
+        "core",
+        "9"
+      ]
+    },
+    {
+      "id": 422,
+      "file": "cpu_amd_ryzen_ai_pro.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "ai",
+        "pro"
+      ]
+    },
+    {
+      "id": 421,
+      "file": "cpu_intel_core_ultra_x7_s3.png",
+      "keywords": [
+        "intel",
+        "core",
+        "ultra",
+        "x7"
+      ]
+    },
+    {
+      "id": 420,
+      "file": "cpu_intel_core_ultra_x9_s3.png",
+      "keywords": [
+        "intel",
+        "core",
+        "ultra",
+        "x9"
+      ]
+    },
+    {
+      "id": 419,
+      "file": "cpu_intel_core_ultra_9_s3.png",
+      "keywords": [
+        "intel",
+        "core",
+        "ultra",
+        "9",
+        "series 3"
+      ]
+    },
+    {
+      "id": 418,
+      "file": "cpu_intel_core_ultra_5_s3.png",
+      "keywords": [
+        "intel",
+        "core",
+        "ultra",
+        "5",
+        "series 3"
+      ]
+    },
+    {
+      "id": 417,
+      "file": "cpu_intel_core_ultra_7_s3.png",
+      "keywords": [
+        "intel",
+        "core",
+        "ultra",
+        "7",
+        "series 3"
+      ]
+    },
+    {
+      "id": 415,
+      "file": "cpu_intel_xeon_6.png",
+      "keywords": [
+        "intel",
+        "xeon"
+      ]
+    },
+    {
+      "id": 412,
+      "file": "cpu_amd_ryzen_threadripper.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "threadripper"
+      ]
+    },
+    {
+      "id": 411,
+      "file": "cpu_amd_ryzen_z2_extreme.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "z2",
+        "extreme"
+      ]
+    },
+    {
+      "id": 410,
+      "file": "cpu_amd_ryzen_z2.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "z2"
+      ]
+    },
+    {
+      "id": 409,
+      "file": "cpu_amd_epyc.png",
+      "keywords": [
+        "amd",
+        "epyc"
+      ]
+    },
+    {
+      "id": 406,
+      "file": "cpu_amd_ryzen_ai_max_plus.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "ai",
+        "max+"
+      ]
+    },
+    {
+      "id": 405,
+      "file": "cpu_amd_ryzen_ai_max.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "ai",
+        "max"
+      ]
+    },
+    {
+      "id": 403,
+      "file": "cpu_amd_ryzen_modern.png",
+      "keywords": [
+        "amd",
+        "ryzen"
+      ]
+    },
+    {
+      "id": 402,
+      "file": "cpu_amd_ryzen_9.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "9"
+      ]
+    },
+    {
+      "id": 401,
+      "file": "cpu_amd_ryzen_7.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "7"
+      ]
+    },
+    {
+      "id": 400,
+      "file": "cpu_amd_ryzen_5.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "5"
+      ]
+    },
+    {
+      "id": 399,
+      "file": "cpu_amd_ryzen_3.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "3"
+      ]
+    },
+    {
+      "id": 398,
+      "file": "cpu_amd_ryzen_ai_9_hx.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "ai",
+        "9",
+        "hx"
+      ]
+    },
+    {
+      "id": 397,
+      "file": "cpu_amd_ryzen_ai_9.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "ai",
+        "9"
+      ]
+    },
+    {
+      "id": 396,
+      "file": "cpu_amd_ryzen_ai_7.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "ai",
+        "7"
+      ]
+    },
+    {
+      "id": 395,
+      "file": "cpu_amd_ryzen_ai_5.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "ai",
+        "5"
+      ]
+    },
+    {
+      "id": 393,
+      "file": "cpu_intel_pentium_gold.png",
+      "keywords": [
+        "intel",
+        "pentium",
+        "gold"
+      ]
+    },
+    {
+      "id": 392,
+      "file": "cpu_intel_core_modern.png",
+      "keywords": [
+        "intel",
+        "core"
+      ]
+    },
+    {
+      "id": 391,
+      "file": "cpu_intel_core_ultra_9.png",
+      "keywords": [
+        "intel",
+        "core",
+        "ultra",
+        "9"
+      ]
+    },
+    {
+      "id": 389,
+      "file": "cpu_intel_core_ultra_7.png",
+      "keywords": [
+        "intel",
+        "core",
+        "ultra",
+        "7"
+      ]
+    },
+    {
+      "id": 388,
+      "file": "cpu_intel_core_ultra_5.png",
+      "keywords": [
+        "intel",
+        "core",
+        "ultra",
+        "5"
+      ]
+    },
+    {
+      "id": 387,
+      "file": "cpu_intel_core_7.png",
+      "keywords": [
+        "intel",
+        "core",
+        "7"
+      ]
+    },
+    {
+      "id": 386,
+      "file": "cpu_intel_core_5.png",
+      "keywords": [
+        "intel",
+        "core",
+        "5"
+      ]
+    },
+    {
+      "id": 385,
+      "file": "cpu_intel_core_3.png",
+      "keywords": [
+        "intel",
+        "core",
+        "3"
+      ]
+    },
+    {
+      "id": 383,
+      "file": "cpu_amd_ryzen_z1.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "z1"
+      ]
+    },
+    {
+      "id": 382,
+      "file": "cpu_amd_ryzen_z1_extreme.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "z1",
+        "extreme"
+      ]
+    },
+    {
+      "id": 380,
+      "file": "cpu_intel_inside.png",
+      "keywords": [
+        "intel"
+      ]
+    },
+    {
+      "id": 379,
+      "file": "cpu_intel_xeon_modern.png",
+      "keywords": [
+        "intel",
+        "xeon"
+      ]
+    },
+    {
+      "id": 378,
+      "file": "cpu_intel_xeon_silver.png",
+      "keywords": [
+        "intel",
+        "xeon",
+        "silver"
+      ]
+    },
+    {
+      "id": 377,
+      "file": "cpu_intel_xeon_platinum.png",
+      "keywords": [
+        "intel",
+        "xeon",
+        "platinum"
+      ]
+    },
+    {
+      "id": 376,
+      "file": "cpu_intel_xeon_gold.png",
+      "keywords": [
+        "intel",
+        "xeon",
+        "gold"
+      ]
+    },
+    {
+      "id": 373,
+      "file": "cpu_intel_atom_modern.png",
+      "keywords": [
+        "intel",
+        "atom"
+      ]
+    },
+    {
+      "id": 372,
+      "file": "cpu_intel_celeron_modern.png",
+      "keywords": [
+        "intel",
+        "celeron"
+      ]
+    },
+    {
+      "id": 371,
+      "file": "cpu_intel_pentium_modern.png",
+      "keywords": [
+        "intel",
+        "pentium"
+      ]
+    },
+    {
+      "id": 366,
+      "file": "cpu_intel_core_i3_gen10.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i3",
+        "10th"
+      ]
+    },
+    {
+      "id": 365,
+      "file": "cpu_intel_core_i3_gen9.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i3",
+        "9th"
+      ]
+    },
+    {
+      "id": 364,
+      "file": "cpu_intel_core_i5_gen10.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i5",
+        "10th"
+      ]
+    },
+    {
+      "id": 362,
+      "file": "cpu_intel_core_i7_gen10.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i7",
+        "10th"
+      ]
+    },
+    {
+      "id": 361,
+      "file": "cpu_intel_core_i9_gen10.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i9",
+        "10th"
+      ]
+    },
+    {
+      "id": 360,
+      "file": "cpu_intel_core_i5_gen9.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i5",
+        "9th"
+      ]
+    },
+    {
+      "id": 359,
+      "file": "cpu_intel_core_i7_gen9.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i7",
+        "9th"
+      ]
+    },
+    {
+      "id": 358,
+      "file": "cpu_intel_core_i9_gen9.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i9",
+        "9th"
+      ]
+    },
+    {
+      "id": 357,
+      "file": "cpu_intel_core_i9_gen11.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i9"
+      ]
+    },
+    {
+      "id": 356,
+      "file": "cpu_intel_core_i7_gen11.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i7"
+      ]
+    },
+    {
+      "id": 355,
+      "file": "cpu_intel_core_i5_gen11.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i5"
+      ]
+    },
+    {
+      "id": 354,
+      "file": "cpu_intel_core_i3_gen11.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i3"
+      ]
+    },
+    {
+      "id": 322,
+      "file": "cpu_amd_athlon.png",
+      "keywords": [
+        "amd",
+        "athlon"
+      ]
+    },
+    {
+      "id": 321,
+      "file": "cpu_intel_core_i7_8086k.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i7",
+        "8086k"
+      ]
+    },
+    {
+      "id": 320,
+      "file": "cpu_amd_a6.png",
+      "keywords": [
+        "amd",
+        "a6"
+      ]
+    },
+    {
+      "id": 318,
+      "file": "cpu_intel_pentium_gold_classic.png",
+      "keywords": [
+        "intel",
+        "pentium",
+        "gold"
+      ]
+    },
+    {
+      "id": 317,
+      "file": "cpu_intel_xeon_phi.png",
+      "keywords": [
+        "intel",
+        "xeon",
+        "phi"
+      ]
+    },
+    {
+      "id": 316,
+      "file": "cpu_intel_xeon_silver_classic.png",
+      "keywords": [
+        "intel",
+        "xeon",
+        "silver"
+      ]
+    },
+    {
+      "id": 315,
+      "file": "cpu_intel_xeon_bronze_classic.png",
+      "keywords": [
+        "intel",
+        "xeon",
+        "bronze"
+      ]
+    },
+    {
+      "id": 314,
+      "file": "cpu_intel_xeon_platinum_classic.png",
+      "keywords": [
+        "intel",
+        "xeon",
+        "platinum"
+      ]
+    },
+    {
+      "id": 313,
+      "file": "cpu_intel_xeon_gold_classic.png",
+      "keywords": [
+        "intel",
+        "xeon",
+        "gold"
+      ]
+    },
+    {
+      "id": 312,
+      "file": "cpu_amd_epyc_gen1.png",
+      "keywords": [
+        "amd",
+        "epyc"
+      ]
+    },
+    {
+      "id": 311,
+      "file": "cpu_amd_ryzen_threadripper_gen1.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "threadripper"
+      ]
+    },
+    {
+      "id": 310,
+      "file": "cpu_intel_core_i9_x.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i9",
+        "x-series"
+      ]
+    },
+    {
+      "id": 309,
+      "file": "cpu_intel_core_i9_extreme.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i9",
+        "extreme"
+      ]
+    },
+    {
+      "id": 308,
+      "file": "cpu_intel_core_i7_x.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i7",
+        "x-series"
+      ]
+    },
+    {
+      "id": 307,
+      "file": "cpu_intel_core_i5_x.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i5",
+        "x-series"
+      ]
+    },
+    {
+      "id": 306,
+      "file": "cpu_amd_ryzen_5_gen1.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "5"
+      ]
+    },
+    {
+      "id": 305,
+      "file": "cpu_amd_ryzen_3_gen1.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "3"
+      ]
+    },
+    {
+      "id": 304,
+      "file": "cpu_amd_ryzen_7_gen1.png",
+      "keywords": [
+        "amd",
+        "ryzen",
+        "7"
+      ]
+    },
+    {
+      "id": 303,
+      "file": "cpu_amd_ryzen_gen1.png",
+      "keywords": [
+        "amd",
+        "ryzen"
+      ]
+    },
+    {
+      "id": 301,
+      "file": "cpu_amd_embedded_r.png",
+      "keywords": [
+        "amd",
+        "embedded",
+        "r-series"
+      ]
+    },
+    {
+      "id": 300,
+      "file": "cpu_amd_embedded_g.png",
+      "keywords": [
+        "amd",
+        "embedded",
+        "g-series"
+      ]
+    },
+    {
+      "id": 299,
+      "file": "cpu_dmp_vortex86.png",
+      "keywords": [
+        "vortex86"
+      ]
+    },
+    {
+      "id": 298,
+      "file": "cpu_amd_a12.png",
+      "keywords": [
+        "amd",
+        "a12"
+      ]
+    },
+    {
+      "id": 297,
+      "file": "cpu_via_eden_x4.png",
+      "keywords": [
+        "via",
+        "eden"
+      ]
+    },
+    {
+      "id": 296,
+      "file": "cpu_amd_e2.png",
+      "keywords": [
+        "amd",
+        "e2"
+      ]
+    },
+    {
+      "id": 295,
+      "file": "cpu_amd_e1.png",
+      "keywords": [
+        "amd",
+        "e1"
+      ]
+    },
+    {
+      "id": 294,
+      "file": "cpu_intel_celeron_classic.png",
+      "keywords": [
+        "intel",
+        "celeron"
+      ]
+    },
+    {
+      "id": 293,
+      "file": "cpu_intel_pentium_classic.png",
+      "keywords": [
+        "intel",
+        "pentium"
+      ]
+    },
+    {
+      "id": 291,
+      "file": "cpu_intel_core_m7.png",
+      "keywords": [
+        "intel",
+        "core",
+        "m7"
+      ]
+    },
+    {
+      "id": 290,
+      "file": "cpu_intel_core_m5.png",
+      "keywords": [
+        "intel",
+        "core",
+        "m5"
+      ]
+    },
+    {
+      "id": 289,
+      "file": "cpu_intel_core_m3.png",
+      "keywords": [
+        "intel",
+        "core",
+        "m3"
+      ]
+    },
+    {
+      "id": 288,
+      "file": "cpu_intel_xeon_classic.png",
+      "keywords": [
+        "intel",
+        "xeon"
+      ]
+    },
+    {
+      "id": 287,
+      "file": "cpu_intel_core_i5_gen6.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i5"
+      ]
+    },
+    {
+      "id": 286,
+      "file": "cpu_intel_core_i3_gen6.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i3"
+      ]
+    },
+    {
+      "id": 285,
+      "file": "cpu_intel_core_i7_gen6.png",
+      "keywords": [
+        "intel",
+        "core",
+        "i7"
+      ]
+    },
+    {
+      "id": 283,
+      "file": "cpu_amd_fx.png",
+      "keywords": [
+        "amd",
+        "fx"
+      ]
+    },
+    {
+      "id": 282,
+      "file": "cpu_amd_a10.png",
+      "keywords": [
+        "amd",
+        "a10"
+      ]
+    },
+    {
+      "id": 281,
+      "file": "cpu_amd_a8.png",
+      "keywords": [
+        "amd",
+        "a8"
+      ]
+    }
+  ],
+  "gpu": [
+    {
+      "id": 425,
+      "file": "gpu_intel_arc_g3_extreme.png",
+      "keywords": [
+        "intel",
+        "arc",
+        "g3",
+        "extreme"
+      ]
+    },
+    {
+      "id": 424,
+      "file": "gpu_intel_arc_g3.png",
+      "keywords": [
+        "intel",
+        "arc",
+        "g3"
+      ]
+    },
+    {
+      "id": 407,
+      "file": "gpu_amd_radeon_graphics.png",
+      "keywords": [
+        "amd",
+        "radeon"
+      ]
+    },
+    {
+      "id": 404,
+      "file": "gpu_intel_arc_battlemage.png",
+      "keywords": [
+        "intel",
+        "arc",
+        "b580",
+        "b570"
+      ]
+    },
+    {
+      "id": 374,
+      "file": "gpu_intel_arc_alchemist.png",
+      "keywords": [
+        "intel",
+        "arc"
+      ]
+    },
+    {
+      "id": 370,
+      "file": "gpu_nvidia_geforce_rtx.png",
+      "keywords": [
+        "nvidia",
+        "geforce",
+        "rtx"
+      ]
+    },
+    {
+      "id": 369,
+      "file": "gpu_nvidia_geforce_gtx.png",
+      "keywords": [
+        "nvidia",
+        "geforce",
+        "gtx"
+      ]
+    },
+    {
+      "id": 368,
+      "file": "gpu_intel_iris_xe.png",
+      "keywords": [
+        "intel",
+        "iris",
+        "xe"
+      ]
+    },
+    {
+      "id": 367,
+      "file": "gpu_nvidia_generic.png",
+      "keywords": [
+        "nvidia"
+      ]
+    }
+  ]
+}

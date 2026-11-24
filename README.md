@@ -54,7 +54,7 @@ A lightweight, native-feeling hardware telemetry, system inspection, and CPU ben
 
 3. **Run the application:**
    ```bash
-   python3 app.py
+   python3 lhwdi.py
    ```
    The app starts a local server on `http://127.0.0.1:5055` and opens the desktop window automatically.
 

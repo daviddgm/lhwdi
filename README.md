@@ -1,10 +1,10 @@
-# CPU-ID Linux
+# LHWDI — Linux Hardware Detection & Information
 
 A lightweight, native-feeling hardware telemetry, system inspection, and CPU benchmarking utility for Linux, designed with a clean desktop interface inspired by the classic **CPUID CPU-Z** for Windows.
 
 ## Overview & Design Philosophy
 
-**CPU-ID Linux** brings the familiar, compact, tabbed layout of **CPU-Z** to Linux desktops—combining real-time `/sys` and `/proc` kernel telemetry with an embedded desktop webview (`pywebview` / Flask).
+**LHWDI** brings the familiar, compact, tabbed layout of **CPU-Z** to Linux desktops—combining real-time `/sys` and `/proc` kernel telemetry with an embedded desktop webview (`pywebview` / Flask).
 
 * **CPU-Z Inspired Interface:** Compact fixed-window layout (`520px` wide) with categorized tabs (*CPU, Caches, Mainboard, Memory, SPD, Graphics, Drives, Sensors, Bench, About*), real-time per-core frequency grids, and both **Dark Mode** and **Light Mode** themes.
 * **Processor & GPU Badges:** Features dedicated hardware logo boxes alongside processor and graphics adapter headers, dynamically matching detected CPU/GPU models against a local badge index (supporting both custom vector badges and classic CPU-Z style hardware emblems).
@@ -42,8 +42,8 @@ A lightweight, native-feeling hardware telemetry, system inspection, and CPU ben
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/cpuid-linux.git
-   cd cpuid-linux
+   git clone https://github.com/daviddgm/lhwdi.git
+   cd lhwdi
    ```
 
 2. **Install Python dependencies:**

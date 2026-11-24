@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 LHWDI TUI - Linux Hardware Detection & Information (Console / Curses Edition)
-Styled after CPU-X & HWiNFO DOS, reusing core telemetry from app.py.
+Styled after CPU-X & HWiNFO DOS, reusing core telemetry from lhwdi.py.
 """
 
 import curses
@@ -11,8 +11,8 @@ import time
 import threading
 from datetime import datetime
 
-# Importa toda a engine de detecção, relatórios e benchmark C do app.py
-import app as backend
+# Importa toda a engine de detecção, relatórios e benchmark C do lhwdi.py
+import lhwdi as backend
 
 
 TABS = [

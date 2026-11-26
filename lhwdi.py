@@ -27,6 +27,122 @@ def read_file(path):
         return None
 
 
+# -------------------------------------------------------------------------
+# ARM / AArch64 SoC & Core Lookup Tables
+# -------------------------------------------------------------------------
+ARM_PART_MAP = {
+    ("0x41", "0xd03"): "ARM Cortex-A53",
+    ("0x41", "0xd04"): "ARM Cortex-A35",
+    ("0x41", "0xd05"): "ARM Cortex-A55",
+    ("0x41", "0xd07"): "ARM Cortex-A57",
+    ("0x41", "0xd08"): "ARM Cortex-A72",
+    ("0x41", "0xd09"): "ARM Cortex-A73",
+    ("0x41", "0xd0a"): "ARM Cortex-A75",
+    ("0x41", "0xd0b"): "ARM Cortex-A76",
+    ("0x41", "0xd0d"): "ARM Cortex-A77",
+    ("0x41", "0xd41"): "ARM Cortex-A78",
+    ("0x41", "0xd46"): "ARM Cortex-A510",
+    ("0x41", "0xd47"): "ARM Cortex-A710",
+    ("0x41", "0xd48"): "ARM Cortex-X2",
+}
+
+ARM_SOC_DB = {
+    "rockchip,rk3588s": ("Rockchip RK3588S", "8 nm (Samsung 8LPP)", "FCBGA-1088 (SoC)"),
+    "rockchip,rk3588":  ("Rockchip RK3588",  "8 nm (Samsung 8LPP)", "FCBGA-1088 (SoC)"),
+    "rockchip,rk3568":  ("Rockchip RK3568",  "22 nm",               "FCBGA-636 (SoC)"),
+    "rockchip,rk3566":  ("Rockchip RK3566",  "22 nm",               "FCBGA-547 (SoC)"),
+    "rockchip,rk3399":  ("Rockchip RK3399",  "28 nm HKMG",          "FCBGA-828 (SoC)"),
+    "allwinner,sun50i-h618": ("Allwinner H618", "28 nm",            "FBGA (SoC)"),
+    "allwinner,sun50i-h616": ("Allwinner H616", "28 nm",            "FBGA (SoC)"),
+    "allwinner,sun50i-h6":   ("Allwinner H6",   "28 nm",            "FBGA (SoC)"),
+    "amlogic,sm1":      ("Amlogic S905X3 (SM1)", "12 nm",           "FBGA (SoC)"),
+    "amlogic,g12b":     ("Amlogic A311D / S922X", "12 nm",          "FBGA (SoC)"),
+    "amlogic,g12a":     ("Amlogic S905X2 (G12A)", "12 nm",          "FBGA (SoC)"),
+    "mediatek,mt8183":  ("MediaTek Helio P60T (MT8183)", "12 nm",   "FBGA (SoC)"),
+    "mediatek,mt8195":  ("MediaTek Kompanio 1380 (MT8195)", "6 nm", "FBGA (SoC)"),
+    "brcm,bcm2712":     ("Broadcom BCM2712 (RPi 5)", "16 nm",       "FCBGA (SoC)"),
+    "brcm,bcm2711":     ("Broadcom BCM2711 (RPi 4)", "28 nm",       "FCBGA (SoC)"),
+}
+
+
+def is_arm_arch() -> bool:
+    return platform.machine().lower() in ("aarch64", "arm64", "armv7l", "armv8l", "armhf")
+
+
+def parse_arm_cpu(cpuinfo: str, cpu: dict) -> None:
+    """Populates CPU fields on ARM/AArch64 systems using /proc/device-tree and /proc/cpuinfo."""
+    dt_model = (read_file("/proc/device-tree/model") or "").replace("\x00", "").strip()
+    dt_compat_raw = read_file("/proc/device-tree/compatible") or ""
+    compat_list = [c.strip() for c in dt_compat_raw.split("\x00") if c.strip()]
+
+    soc_name, litho, pkg = None, "N/A", "BGA (Embedded SoC)"
+    for c in compat_list:
+        if c in ARM_SOC_DB:
+            soc_name, litho, pkg = ARM_SOC_DB[c]
+            break
+
+    soc_vendor = "ARM SoC"
+    for c in compat_list:
+        if c.startswith("rockchip,"):
+            soc_vendor = "Rockchip"
+            break
+        if c.startswith("allwinner,"):
+            soc_vendor = "Allwinner"
+            break
+        if c.startswith("amlogic,"):
+            soc_vendor = "Amlogic"
+            break
+        if c.startswith("mediatek,"):
+            soc_vendor = "MediaTek"
+            break
+        if c.startswith("brcm,"):
+            soc_vendor = "Broadcom"
+            break
+
+    clusters = {}
+    blocks = [b for b in cpuinfo.strip().split("\n\n") if "processor" in b.lower()]
+    for blk in blocks:
+        imp_m = re.search(r"CPU implementer\s*:\s*(0x[0-9a-fA-F]+)", blk)
+        part_m = re.search(r"CPU part\s*:\s*(0x[0-9a-fA-F]+)", blk)
+        if imp_m and part_m:
+            core_label = ARM_PART_MAP.get(
+                (imp_m.group(1).lower(), part_m.group(1).lower()),
+                f"ARM Part {part_m.group(1)}"
+            )
+            clusters[core_label] = clusters.get(core_label, 0) + 1
+
+    cluster_desc = " + ".join(f"{cnt}x {name}" for name, cnt in clusters.items()) if clusters else "ARMv8/v9"
+
+    cpu["vendor"] = soc_vendor
+    if soc_name and dt_model and soc_name.lower() not in dt_model.lower():
+        cpu["name"] = f"{soc_name} ({dt_model})"
+    else:
+        cpu["name"] = soc_name or dt_model or f"{soc_vendor} Processor"
+
+    cpu["codename"] = cluster_desc
+    cpu["lithography"] = litho
+    cpu["package"] = pkg
+    cpu["cores"] = str(len(blocks)) if blocks else str(cpu["threads"])
+    cpu["threads"] = len(blocks) if blocks else cpu["threads"]
+
+    feat_m = re.search(r"Features\s*:\s*(.+)", cpuinfo)
+    if feat_m:
+        cpu["flags"] = feat_m.group(1).strip()
+
+    bogo_m = re.search(r"BogoMIPS\s*:\s*(.+)", cpuinfo, re.IGNORECASE)
+    if bogo_m:
+        cpu["bogomips"] = bogo_m.group(1).strip()
+
+    var_m = re.search(r"CPU variant\s*:\s*(0x[0-9a-fA-F]+)", cpuinfo)
+    rev_m = re.search(r"CPU revision\s*:\s*(\d+)", cpuinfo)
+    part_first = re.search(r"CPU part\s*:\s*(0x[0-9a-fA-F]+)", cpuinfo)
+    if part_first:
+        cpu["family"] = "ARMv8/v9"
+        cpu["model"] = part_first.group(1)
+    if var_m and rev_m:
+        cpu["stepping"] = f"r{int(var_m.group(1), 16)}p{rev_m.group(1)}"
+
+
 def detect_cpu_package(vendor: str, family_str: str, model_str: str, name: str) -> str:
     """
     Detects CPU socket / package via DMI Type 4 (if dmidecode is authorized)
@@ -315,11 +431,10 @@ def detect_gpu_specs(pci_id: str, name: str) -> dict:
 def get_bus_speed_mhz() -> float:
     """
     Returns the reference base clock / bus speed in MHz.
-    Modern x86_64 platforms use a 100.0 MHz BCLK; falls back to cpuinfo_min_freq/base if available.
+    Modern x86_64 platforms use a 100.0 MHz BCLK; ARM SoCs use a 24.0 MHz reference crystal.
     """
-    arch = platform.machine().lower()
-    if arch in ("x86_64", "amd64", "i386", "i686"):
-        return 100.0
+    if is_arm_arch():
+        return 24.0
     return 100.0
 
 
@@ -410,37 +525,50 @@ def get_static_hardware():
     }
 
     cpuinfo = read_file("/proc/cpuinfo")
-    if cpuinfo:
-        processors = cpuinfo.strip().split("\n\n")
-        cpu["threads"] = len(processors)
-        first = processors[0]
+    if is_arm_arch():
+        if cpuinfo:
+            parse_arm_cpu(cpuinfo, cpu)
+        else:
+            parse_arm_cpu("", cpu)
+    else:
+        if cpuinfo:
+            processors = cpuinfo.strip().split("\n\n")
+            cpu["threads"] = len(processors)
+            first = processors[0]
 
-        patterns = {
-            "name": r"model name\s*:\s*(.+)",
-            "vendor": r"vendor_id\s*:\s*(.+)",
-            "family": r"cpu family\s*:\s*(.+)",
-            "model": r"^model\s*:\s*(.+)",
-            "stepping": r"stepping\s*:\s*(.+)",
-            "flags": r"flags\s*:\s*(.+)",
-            "bogomips": r"bogomips\s*:\s*(.+)",
-            "cores": r"cpu cores\s*:\s*(.+)"
-        }
-        for key, pat in patterns.items():
-            m = re.search(pat, first, re.MULTILINE)
-            if m:
-                cpu[key] = m.group(1).strip()
+            patterns = {
+                "name": r"model name\s*:\s*(.+)",
+                "vendor": r"vendor_id\s*:\s*(.+)",
+                "family": r"cpu family\s*:\s*(.+)",
+                "model": r"^model\s*:\s*(.+)",
+                "stepping": r"stepping\s*:\s*(.+)",
+                "flags": r"flags\s*:\s*(.+)",
+                "bogomips": r"bogomips\s*:\s*(.+)",
+                "cores": r"cpu cores\s*:\s*(.+)"
+            }
+            for key, pat in patterns.items():
+                m = re.search(pat, first, re.MULTILINE)
+                if m:
+                    cpu[key] = m.group(1).strip()
 
-    cpu_specs = detect_cpu_specs(cpu["vendor"], cpu["family"], cpu["model"], cpu["name"])
-    cpu["codename"] = cpu_specs["codename"]
-    cpu["lithography"] = cpu_specs["lithography"]
-    cpu["package"] = detect_cpu_package(cpu["vendor"], cpu["family"], cpu["model"], cpu["name"])
+        cpu_specs = detect_cpu_specs(cpu["vendor"], cpu["family"], cpu["model"], cpu["name"])
+        cpu["codename"] = cpu_specs["codename"]
+        cpu["lithography"] = cpu_specs["lithography"]
+        cpu["package"] = detect_cpu_package(cpu["vendor"], cpu["family"], cpu["model"], cpu["name"])
 
-    min_f = read_file("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq")
-    max_f = read_file("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq")
-    if min_f and min_f.isdigit():
-        cpu["min_mhz"] = f"{int(min_f)/1000:.2f}"
-    if max_f and max_f.isdigit():
-        cpu["max_mhz"] = f"{int(max_f)/1000:.2f}"
+    # Read min/max across all cores (handles big.LITTLE clusters where cpu0 != max cluster)
+    min_freqs = [
+        int(v) for p in glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq/cpuinfo_min_freq")
+        if (v := read_file(p)) and v.isdigit()
+    ]
+    max_freqs = [
+        int(v) for p in glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq/cpuinfo_max_freq")
+        if (v := read_file(p)) and v.isdigit()
+    ]
+    if min_freqs:
+        cpu["min_mhz"] = f"{min(min_freqs)/1000:.2f}"
+    if max_freqs:
+        cpu["max_mhz"] = f"{max(max_freqs)/1000:.2f}"
 
     # Cache hierarchy
     caches = []
@@ -460,13 +588,15 @@ def get_static_hardware():
                         "ways": f"{ways}-way" if ways else "N/A"
                     })
 
-    # Motherboard & BIOS
+    # Motherboard & BIOS (DMI on x86_64, Device Tree fallback on ARM SBCs)
     dmi = "/sys/devices/virtual/dmi/id"
+    dt_model = (read_file("/proc/device-tree/model") or "").replace("\x00", "").strip()
+    dt_serial = (read_file("/proc/device-tree/serial-number") or "").replace("\x00", "").strip()
     mainboard = {
-        "manufacturer": read_file(f"{dmi}/board_vendor") or "N/A",
-        "model": read_file(f"{dmi}/board_name") or "N/A",
-        "version": read_file(f"{dmi}/board_version") or "N/A",
-        "bios_vendor": read_file(f"{dmi}/bios_vendor") or "N/A",
+        "manufacturer": read_file(f"{dmi}/board_vendor") or (cpu["vendor"] if is_arm_arch() else "N/A"),
+        "model": read_file(f"{dmi}/board_name") or (dt_model if dt_model else "N/A"),
+        "version": read_file(f"{dmi}/board_version") or (f"S/N {dt_serial}" if dt_serial else "N/A"),
+        "bios_vendor": read_file(f"{dmi}/bios_vendor") or ("U-Boot / Device Tree" if is_arm_arch() else "N/A"),
         "bios_version": read_file(f"{dmi}/bios_version") or "N/A",
         "bios_date": read_file(f"{dmi}/bios_date") or "N/A",
     }
@@ -497,7 +627,15 @@ def get_hwmon_sensors():
         "nvme": "NVMe SSD",
         "it87": "Mainboard Super I/O",
         "nct6775": "Mainboard Super I/O",
-        "acpitz": "ACPI Thermal Zone"
+        "acpitz": "ACPI Thermal Zone",
+        "soc_thermal": "ARM SoC Thermal",
+        "cpu_thermal": "ARM CPU Thermal",
+        "gpu_thermal": "ARM GPU Thermal",
+        "bigcore0_thermal": "ARM Big Core 0",
+        "bigcore1_thermal": "ARM Big Core 1",
+        "littlecore_thermal": "ARM Little Cores",
+        "center_thermal": "SoC Center Thermal",
+        "npu_thermal": "NPU Thermal"
     }
 
     sensors = []
@@ -536,7 +674,7 @@ def get_hwmon_sensors():
                 "crit": crit_c
             })
 
-    priority = {"k10temp": 0, "zenpower": 0, "amdgpu": 1, "nvme": 2}
+    priority = {"k10temp": 0, "zenpower": 0, "soc_thermal": 0, "cpu_thermal": 0, "amdgpu": 1, "gpu_thermal": 1, "nvme": 2}
     sensors.sort(key=lambda s: priority.get(s["driver"], 3))
     return sensors
 
@@ -562,12 +700,18 @@ def get_dynamic_telemetry():
         for i, m in enumerate(matches):
             core_clocks.append({"core": f"Core #{i}", "mhz": round(float(m), 1)})
 
-    # Compute current multiplier range & bus speed
+    # Compute current multiplier range & bus speed (across all clusters)
     bus_mhz = get_bus_speed_mhz()
-    min_f = read_file("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq")
-    max_f = read_file("/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq")
-    min_mult = round((int(min_f) / 1000.0) / bus_mhz, 1) if min_f and min_f.isdigit() else None
-    max_mult = round((int(max_f) / 1000.0) / bus_mhz, 1) if max_f and max_f.isdigit() else None
+    min_freqs = [
+        int(v) for p in glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq/cpuinfo_min_freq")
+        if (v := read_file(p)) and v.isdigit()
+    ]
+    max_freqs = [
+        int(v) for p in glob.glob("/sys/devices/system/cpu/cpu[0-9]*/cpufreq/cpuinfo_max_freq")
+        if (v := read_file(p)) and v.isdigit()
+    ]
+    min_mult = round((min(min_freqs) / 1000.0) / bus_mhz, 1) if min_freqs else None
+    max_mult = round((max(max_freqs) / 1000.0) / bus_mhz, 1) if max_freqs else None
 
     if core_clocks:
         peak_mhz = max(c["mhz"] for c in core_clocks)
@@ -733,6 +877,86 @@ def parse_spd_slots(use_pkexec=False):
     return slots
 
 
+def detect_arm_platform_gpu(card_path: str, driver: str) -> dict:
+    """Detects integrated ARM GPUs (Mali / Panfrost / Panthor / Lima / VideoCore) via sysfs/devfreq."""
+    dt_compat = (read_file("/proc/device-tree/compatible") or "").replace("\x00", " ")
+    mali_model = "Integrated ARM GPU"
+    codename = "ARM GPU"
+    litho = "SoC Integrated"
+
+    if "rk3588" in dt_compat:
+        mali_model = "ARM Mali-G610 MP4"
+        codename = "Valhall 3rd Gen (Odin)"
+        litho = "8 nm (SoC)"
+    elif "rk3568" in dt_compat or "rk3566" in dt_compat:
+        mali_model = "ARM Mali-G52 2EE"
+        codename = "Bifrost"
+        litho = "22 nm (SoC)"
+    elif "rk3399" in dt_compat:
+        mali_model = "ARM Mali-T860 MP4"
+        codename = "Midgard 4th Gen"
+        litho = "28 nm (SoC)"
+    elif "sun50i-h61" in dt_compat:
+        mali_model = "ARM Mali-G31 MP2"
+        codename = "Bifrost"
+        litho = "28 nm (SoC)"
+    elif "amlogic,sm1" in dt_compat or "amlogic,g12" in dt_compat:
+        mali_model = "ARM Mali-G31 MP2 / G52"
+        codename = "Bifrost"
+        litho = "12 nm (SoC)"
+    elif "mt8183" in dt_compat:
+        mali_model = "ARM Mali-G72 MP3"
+        codename = "Bifrost"
+        litho = "12 nm (SoC)"
+    elif "mt8195" in dt_compat:
+        mali_model = "ARM Mali-G57 MC5"
+        codename = "Valhall"
+        litho = "6 nm (SoC)"
+    elif "bcm2712" in dt_compat:
+        mali_model = "Broadcom VideoCore VII"
+        codename = "V3D 7.1"
+        litho = "16 nm (SoC)"
+    elif "bcm2711" in dt_compat:
+        mali_model = "Broadcom VideoCore VI"
+        codename = "V3D 4.2"
+        litho = "28 nm (SoC)"
+
+    sclk = "N/A"
+    busy = "N/A"
+    devfreq_dirs = (
+        glob.glob("/sys/class/devfreq/*gpu*")
+        + glob.glob("/sys/class/devfreq/*mali*")
+        + glob.glob("/sys/class/devfreq/*v3d*")
+    )
+    if devfreq_dirs:
+        cur_hz = read_file(os.path.join(devfreq_dirs[0], "cur_freq"))
+        if cur_hz and cur_hz.isdigit():
+            sclk = f"{int(cur_hz) // 1_000_000} MHz"
+        load_raw = read_file(os.path.join(devfreq_dirs[0], "load"))
+        if load_raw and "@" in load_raw:
+            busy = f"{load_raw.split('@')[0].strip()} %"
+
+    return {
+        "card": os.path.basename(card_path),
+        "name": mali_model,
+        "codename": codename,
+        "lithography": litho,
+        "subvendor": "ARM / SoC Integrated",
+        "pci_id": "Platform Bus (SoC)",
+        "driver": driver,
+        "pcie": "AXI / Internal SoC Bus",
+        "vram_total": "Shared System RAM",
+        "vram_used": "Dynamic (CMA)",
+        "vram_pct": 0,
+        "vram_vendor": "LPDDR4 / LPDDR5",
+        "busy": busy,
+        "sclk": sclk,
+        "mclk": "Shared",
+        "temp": "See SoC Thermal",
+        "power": "Shared SoC"
+    }
+
+
 def get_gpu_details():
     gpus = []
     subvendors = {
@@ -749,7 +973,7 @@ def get_gpu_details():
 
     lspci_names = {}
     try:
-        lspci_out = subprocess.check_output(["lspci", "-nn"], text=True)
+        lspci_out = subprocess.check_output(["lspci", "-nn"], stderr=subprocess.DEVNULL, text=True)
         for line in lspci_out.splitlines():
             if "VGA" in line or "3D" in line or "Display" in line:
                 slot = line.split()[0]
@@ -772,6 +996,14 @@ def get_gpu_details():
         pci_slot = pci_slot_m.group(1).strip() if pci_slot_m else os.path.basename(card)
         driver = driver_m.group(1).strip() if driver_m else "N/A"
         pci_id = pci_id_m.group(1).strip() if pci_id_m else "N/A"
+
+        # Handle integrated ARM platform GPUs (non-PCIe) and skip display-only DRM nodes
+        if pci_id == "N/A":
+            arm_3d_drivers = ("panfrost", "panthor", "lima", "mali", "mali_kbase", "v3d", "vc4", "etnaviv", "pvrsrvkm")
+            if driver.lower() in arm_3d_drivers:
+                gpus.append(detect_arm_platform_gpu(card, driver))
+            continue
+
         revision = read_file(os.path.join(dev_path, "revision")) or "N/A"
 
         subvendor_name = "Unknown"
@@ -842,6 +1074,11 @@ def get_gpu_details():
             "power": gpu_power
         })
 
+    # Fallback on ARM SBCs if DRM card node uses display driver only, but devfreq GPU exists
+    if not gpus and is_arm_arch():
+        if glob.glob("/sys/class/devfreq/*gpu*") or glob.glob("/sys/class/devfreq/*mali*"):
+            gpus.append(detect_arm_platform_gpu("gpu0", "panfrost / mali"))
+
     return gpus
 
 
@@ -861,11 +1098,14 @@ def get_storage_drives():
 
     block_paths = sorted(
         glob.glob("/sys/block/nvme[0-9]*n[0-9]*") +
-        glob.glob("/sys/block/sd[a-z]*")
+        glob.glob("/sys/block/sd[a-z]*") +
+        glob.glob("/sys/block/mmcblk[0-9]*")
     )
 
     for bpath in block_paths:
         dev_name = os.path.basename(bpath)
+        if "boot" in dev_name or "rpmb" in dev_name:
+            continue
         dev_dir = os.path.join(bpath, "device")
 
         sectors_str = read_file(os.path.join(bpath, "size"))
@@ -877,7 +1117,7 @@ def get_storage_drives():
         size_gib = total_bytes / (1024 ** 3)
         size_str = f"{size_gb:.0f} GB ({size_gib:.1f} GiB)"
 
-        model = read_file(os.path.join(dev_dir, "model")) or dev_name
+        model = read_file(os.path.join(dev_dir, "model")) or read_file(os.path.join(dev_dir, "name")) or dev_name
         serial = read_file(os.path.join(dev_dir, "serial")) or "N/A"
         firmware = read_file(os.path.join(dev_dir, "firmware_rev")) or read_file(os.path.join(dev_dir, "rev")) or "N/A"
         state = read_file(os.path.join(dev_dir, "state")) or "online"
@@ -895,6 +1135,11 @@ def get_storage_drives():
             else:
                 interface_str = "NVMe PCI Express"
             hwmon_glob = os.path.join(ctrl_dev, "hwmon", "hwmon*")
+        elif dev_name.startswith("mmcblk"):
+            mmc_type = read_file(os.path.join(dev_dir, "type")) or "MMC"
+            drive_type = "eMMC Flash" if mmc_type == "MMC" else "SD / microSD Card"
+            interface_str = f"SDHCI / {mmc_type} Bus"
+            hwmon_glob = os.path.join(dev_dir, "hwmon", "hwmon*")
         else:
             is_hdd = (rotational == "1")
             drive_type = "HDD (Mechanical)" if is_hdd else "SATA / USB SSD"
@@ -1103,6 +1348,7 @@ def save_screenshot_to_downloads():
         }), 500
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
+
 
 def start_server():
     app.run(host="127.0.0.1", port=5055, debug=False, use_reloader=False)

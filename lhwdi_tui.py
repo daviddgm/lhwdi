@@ -28,6 +28,9 @@ BENCH_REFS = [
     ("AMD Ryzen 5 3600 (6C/12T)", 495.0, 4050.0),
     ("AMD Ryzen 7 7700X (8C/16T)", 765.0, 12600.0),
     ("Intel Core i7-13700K (16C/24T)", 820.0, 17100.0),
+    ("Rockchip RK3588 (4xA76+4xA55)", 185.0, 1120.0),
+    ("Broadcom BCM2712 RPi 5 (4xA76)", 175.0, 650.0),
+    ("Rockchip RK3399 (2xA72+4xA53)", 110.0, 440.0),
 ]
 
 
@@ -234,10 +237,15 @@ class LHWDIConsoleApp:
         # Caixa 2: Clocks & Topology (lado a lado)
         mid_y = top + 9
         half_box = (w - 3) // 2
+        try:
+            minmax_str = f"{float(cpu['min_mhz']):.0f} - {float(cpu['max_mhz']):.0f} MHz"
+        except (ValueError, TypeError):
+            minmax_str = "N/A"
+
         self.draw_box(mid_y, 1, 5, half_box, "Clocks")
         self.draw_field(mid_y + 1, 3, "Multiplier", meta.get("multiplier", "-"), 11, half_box - 4, curses.color_pair(3) | curses.A_BOLD)
         self.draw_field(mid_y + 2, 3, "Bus Speed", f"{meta.get('bus_speed_mhz', 100.0):.1f} MHz", 11, half_box - 4)
-        self.draw_field(mid_y + 3, 3, "Min / Max", f"{float(cpu['min_mhz']):.0f} - {float(cpu['max_mhz']):.0f} MHz", 11, half_box - 4)
+        self.draw_field(mid_y + 3, 3, "Min / Max", minmax_str, 11, half_box - 4)
 
         right_x = 1 + half_box + 1
         right_w = w - right_x - 1
@@ -306,7 +314,7 @@ class LHWDIConsoleApp:
     def draw_tab_spd(self, top: int, bottom: int, w: int):
         if self.spd_slots is None:
             self.draw_box(top, 1, 7, w - 2, "Memory Slot Selection (SPD / DMI)")
-            self.safe_addstr(top + 2, 3, "Reading via dmidecode is not authorized without root/sudo.", curses.color_pair(7) | curses.A_BOLD)
+            self.safe_addstr(top + 2, 3, "Reading via dmidecode is not authorized or unavailable on ARM.", curses.color_pair(7) | curses.A_BOLD)
             self.safe_addstr(top + 4, 3, "Press [U] to attempt unlocking SPD modules via sudo -n dmidecode.", curses.color_pair(1))
             return
 

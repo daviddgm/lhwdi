@@ -681,6 +681,9 @@
                     <option value="495,4050">AMD Ryzen 5 3600 (6C/12T)</option>
                     <option value="765,12600">AMD Ryzen 7 7700X (8C/16T)</option>
                     <option value="820,17100">Intel Core i7-13700K (16C/24T)</option>
+		    <option value="185,1120">Rockchip RK3588 (4xA76+4xA55)</option>
+		    <option value="175,650">Broadcom BCM2712 RPi 5 (4xA76)</option>
+		    <option value="110,440">Rockchip RK3399 (2xA72+4xA53)</option>
                 </select>
             </div>
 
@@ -826,9 +829,14 @@
             // Fallback by vendor if no specific badge matched
             if (!bestFile) {
                 const allLogos = [...(_logosCache.gpu || []), ...(_logosCache.cpu || [])];
-                const brand = norm.includes('radeon') || norm.includes('amd') || norm.includes('ati') ? 'amd'
-                            : norm.includes('nvidia') || norm.includes('geforce') || norm.includes('rtx') || norm.includes('gtx') ? 'nvidia'
-                            : norm.includes('intel') || norm.includes('arc') ? 'intel' : null;
+		const brand = norm.includes('radeon') || norm.includes('amd') || norm.includes('ati') ? 'amd'
+		            : norm.includes('nvidia') || norm.includes('geforce') || norm.includes('rtx') || norm.includes('gtx') ? 'nvidia'
+		            : norm.includes('intel') || norm.includes('arc') ? 'intel'
+		            : norm.includes('rockchip') ? 'rockchip'
+		            : norm.includes('allwinner') ? 'allwinner'
+		            : norm.includes('amlogic') ? 'amlogic'
+		            : norm.includes('mediatek') ? 'mediatek'
+		            : norm.includes('mali') || norm.includes('arm') ? 'arm' : null;
                 if (brand) {
                     const fallback = allLogos.find(it => it.file.toLowerCase().includes(brand));
                     if (fallback) bestFile = fallback.file;

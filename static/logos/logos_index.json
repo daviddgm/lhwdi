@@ -826,6 +826,50 @@
         "amd",
         "a8"
       ]
+    },
+    {
+      "id": 426,
+      "file": "cpu_rockchip.png",
+      "keywords": [
+        "rockchip"
+      ] 
+    },
+    {
+      "id": 427,
+      "file": "cpu_allwinner.png",
+      "keywords": [
+        "allwinner"
+      ]
+    },
+    {
+      "id": 428,
+      "file": "cpu_amlogic.png",
+      "keywords": [
+        "amlogic"
+      ]
+    },
+    {
+      "id": 429,
+      "file": "cpu_mediatek.png",
+      "keywords": [
+        "mediatek"
+       ]
+    },
+    {
+      "id": 430,
+      "file": "cpu_arm.png",
+      "keywords": [
+        "arm",
+        "cortex"
+      ]
+    },
+    {
+      "id": 431,
+      "file": "cpu_broadcom.png",
+      "keywords": [
+        "broadcom",
+        "brcm"
+      ]
     }
   ],
   "gpu": [
@@ -906,6 +950,13 @@
       "file": "gpu_nvidia_generic.png",
       "keywords": [
         "nvidia"
+      ]
+    },
+    {
+      "id": 432,
+      "file": "gpu_arm_mali.png",
+      "keywords": [
+      "mali"
       ]
     }
   ]
